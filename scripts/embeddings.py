@@ -19,10 +19,10 @@ if __name__ == "__main__":
 	parser.add_argument("--animate_pronouns", nargs="+", help="list of animate pronouns")
 	parser.add_argument("--inanimate_pronouns", nargs="+", help="list of inanimate pronouns")
 
+	args, other = parser.parse_known_args()
 	a_t = AutoTokenizer.from_pretrained(args.model)
 	model = AutoModel.from_pretrained(args.model)
 
-	args, other = parser.parse_known_args()
 	print(args.target_words)
 	search_pattern = re.compile(r"\b(?:%s)\b" % "|".join(args.target_words), re.IGNORECASE)
 	inputs_animate = a_t(" ".join(args.animate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
