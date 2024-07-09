@@ -1,19 +1,16 @@
 import argparse
 import gzip
 import json
-
 import logging
-
 from transformers import AutoTokenizer, AutoModel
 from torch.nn.functional import softmax
 import re
 import torch
-import csv
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("samples_in", help="tokenized gz.jsonl file containing fulltext and metadata")
-	parser.add_argument("embeddings_out", help="csv with embeddings and texts")
+	parser.add_argument("embeddings_out", help="gz.jsonl file with embeddings and texts")
 	parser.add_argument("--model", help="bert or roberta model name")
 	parser.add_argument("--target_words", nargs="+", help="Embed all sents containing these words. Case insensitive")
 	parser.add_argument("--animate_pronouns", nargs="+", help="list of animate pronouns")
@@ -28,9 +25,9 @@ if __name__ == "__main__":
 	inputs_animate = a_t(" ".join(args.animate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
 	inputs_inanimate = a_t(" ".join(args.inanimate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
 
-	with gzip.open(args.samples_in, "rt") as in_s, open(args.embeddings_out, "wt", newline="") as e_out:
-		out_writer=csv.writer(e_out)
-		out_writer.writerow(["ID","Title","Author","Sentence","Word","Score"])
+	with gzip.open(args.samples_in, "rt") as in_s, gzip.open(args.embeddings_out, "wt") as e_out:
+		out_writer=json.dumps(e_out)+"n"
+		e_out.append(["ID","Title","Author","Sentence","Word","Score"])
 		n=0
 		for line in in_s:
 			if n<1000000000:
@@ -52,7 +49,7 @@ if __name__ == "__main__":
 									pdf = softmax(masked_token_logits, dim=-1)
 									a_score = torch.log(torch.sum(pdf[0, inputs_animate]))-torch.log(torch.sum(pdf[0, inputs_inanimate])).item()
 									print(a_score)
-									out_writer.writerow([j_line["id"],j_line["title"], j_line["author"], sent, w, a_score.item()])
+									e_out.append([j_line["id"],j_line["title"], j_line["author"], sent, w, a_score.item()])
 								except RuntimeError:
-									out_writer.writerow([j_line["id"],j_line["title"], j_line["author"], sent, w, "error"])
+									e_out.append([j_line["id"],j_line["title"], j_line["author"], sent, w, "error"])
 			n=n+1
