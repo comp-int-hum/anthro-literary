@@ -26,8 +26,6 @@ if __name__ == "__main__":
 	inputs_inanimate = a_t(" ".join(args.inanimate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
 
 	with gzip.open(args.samples_in, "rt") as in_s, gzip.open(args.embeddings_out, "wt") as e_out:
-		out_writer=json.dumps(e_out)+"n"
-		e_out.append(["ID","Title","Author","Sentence","Word","Score"])
 		n=0
 		for line in in_s:
 			if n<1000000000:
@@ -49,7 +47,10 @@ if __name__ == "__main__":
 									pdf = softmax(masked_token_logits, dim=-1)
 									a_score = torch.log(torch.sum(pdf[0, inputs_animate]))-torch.log(torch.sum(pdf[0, inputs_inanimate])).item()
 									print(a_score)
-									e_out.append([j_line["id"],j_line["title"], j_line["author"], sent, w, a_score.item()])
+									e_out.write(json.dumps({ID: ["id"], Title: ["title"], Author: ["author"], Sentence: sent, Mask: masked_sentence, Word: w, Score: a_score.item()}) +"n")
 								except RuntimeError:
-									e_out.append([j_line["id"],j_line["title"], j_line["author"], sent, w, "error"])
+									e_out.write(json.dumps({ID: ["id"], Title: ["title"], Author: ["author"], Sentence: sent, Mask: masked_sentence, Word: w, Score: "error"})+"n")
 			n=n+1
+
+#create a dict for json.dumps
+#j_line or not
