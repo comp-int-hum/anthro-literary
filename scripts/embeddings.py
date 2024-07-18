@@ -20,7 +20,7 @@ if __name__ == "__main__":
 	a_t = AutoTokenizer.from_pretrained(args.model)
 	model = AutoModel.from_pretrained(args.model)
 
-	print(args.target_words)
+#	print(args.target_words)
 	search_pattern = re.compile(r"\b(?:%s)\b" % "|".join(args.target_words), re.IGNORECASE)
 	inputs_animate = a_t(" ".join(args.animate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
 	inputs_inanimate = a_t(" ".join(args.inanimate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
@@ -34,13 +34,14 @@ if __name__ == "__main__":
 				for sent in j_line["full_text"]:
 					if re.search(search_pattern, sent):
 						for w in args.target_words:
-							masked_sentence = re.subn(r"\b(?:%s)\b" % w, tokenizer.mask_token, sent, re.IGNORECASE)
+							masked_sentence = re.subn(r"\b(?:%s)\b" % w, a_t.mask_token, sent, re.IGNORECASE)
 							if masked_sentence[1] > 0:
-								print(masked_sentence[0])
+#								print(masked_sentence[0])
 								try:
 									tokenized_sent = a_t(masked_sentence[0], return_tensors="pt")
 									with torch.no_grad():
 										logits = model(**tokenized_sent).logits
+										#receiving AttributeError that BaseModelOutputWithPoolingAndCrossAttentions object has no attribute 'logits'
 									mask_token_index = (tokenized_sent.input_ids == a_t.mask_token_id)[0].nonzero(as_tuple=True)[0]
 									masked_token_logits = logits[0, mask_token_index]
 									print(masked_token_logits.shape)
