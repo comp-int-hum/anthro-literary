@@ -1,22 +1,20 @@
 import gzip
 import json
 import spacy
-import csv
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
 	parser.add_argument("embeddings_in", help = "masked sentences from embeddings gz.jsonl")
-	parser.add_argument("verbs_out", help = "csv with verbs by frequency")
+	parser.add_argument("verbs_out", help = "gz.jsonl with verbs and frequency")
 
 	args, other = parser.parse_known_args()
 	nlp = spacy.load("en_core_web_sm")
 
-	with gzip.open(args.embeddings_in, "rt") as in_embed, open(args.verbs_out, "wt", newline="") as v_out:
-		out_writer=csv.writer(v_out)
-		out_writer.writerow()
+	with gzip.open(args.embeddings_in, "rt") as in_embed, gzip.open(args.verbs_out, "wt") as v_out:
 		doc = nlp(in_embed)
-		verb_counts = doc.count_by(POS)
 		for token in doc:
-			if token.pos_ = {"VERB"}:
-				for count in verb_counts.items:
-					out_writer.writerow(token.pos_, count)
+			if token.pos_ == {"VERB"}:
+			verb_count = doc.count_by(POS)
+				if count in verb_count.items > 1:
+					v_out.write(json.dumps({ID: ["id"], Title: ["title"], Author: ["author"], Sentence: sent, Mask: masked_sentence, Word: w, Score: a_score.item(), Verb: token.pos_, Frequency: count})+"n")
+					#omit sent to only include masked sent?
