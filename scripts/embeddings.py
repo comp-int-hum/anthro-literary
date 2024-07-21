@@ -2,7 +2,7 @@ import argparse
 import gzip
 import json
 import logging
-from transformers import AutoTokenizer, AutoModel
+from transformers import AutoTokenizer, BertForMaskedLM, RobertaForMaskedLM
 from torch.nn.functional import softmax
 import re
 import torch
@@ -18,7 +18,12 @@ if __name__ == "__main__":
 
 	args, other = parser.parse_known_args()
 	a_t = AutoTokenizer.from_pretrained(args.model)
-	model = AutoModel.from_pretrained(args.model)
+	if args.model == "bert-base-uncased":
+		model = BertForMaskedLM.from_pretrained(args.model)
+	elif args.model == "FacebookAI/roberta-base":
+		model = RobertaForMaskedLM.from_pretrained(args.model)
+	else:
+		exit
 
 #	print(args.target_words)
 	search_pattern = re.compile(r"\b(?:%s)\b" % "|".join(args.target_words), re.IGNORECASE)
@@ -41,14 +46,13 @@ if __name__ == "__main__":
 									tokenized_sent = a_t(masked_sentence[0], return_tensors="pt")
 									with torch.no_grad():
 										logits = model(**tokenized_sent).logits
-										#receiving AttributeError that BaseModelOutputWithPoolingAndCrossAttentions object has no attribute 'logits'
 									mask_token_index = (tokenized_sent.input_ids == a_t.mask_token_id)[0].nonzero(as_tuple=True)[0]
 									masked_token_logits = logits[0, mask_token_index]
 									print(masked_token_logits.shape)
 									pdf = softmax(masked_token_logits, dim=-1)
 									a_score = torch.log(torch.sum(pdf[0, inputs_animate]))-torch.log(torch.sum(pdf[0, inputs_inanimate])).item()
 									print(a_score)
-									e_out.write(json.dumps({ID: ["id"], Title: ["title"], Author: ["author"], Sentence: sent, Mask: masked_sentence, Word: w, Score: a_score.item()})+"n")
+									e_out.write(json.dumps(j_line | {"masked": masked_sentence, "word": w, "score": a_score.values()}))
 								except RuntimeError:
-									e_out.write(json.dumps({ID: ["id"], Title: ["title"], Author: ["author"], Sentence: sent, Mask: masked_sentence, Word: w, Score: "error"})+"n")
+									e_out.write(json.dumps(j_line | {"masked": masked_sentence, "word": w, "score": "error"}))
 			n=n+1
