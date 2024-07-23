@@ -11,10 +11,11 @@ if __name__ == "__main__":
 	nlp = spacy.load("en_core_web_sm")
 
 	with gzip.open(args.embeddings_in, "rt") as in_embed, gzip.open(args.verbs_out, "wt") as v_out:
-		doc = nlp(in_embed)
-		for token in doc:
-			if token.pos_ == {"VERB"}:
-			verb_count = doc.count_by(POS)
-				if count in verb_count.items > 1:
-					v_out.write(json.dumps({ID: ["id"], Title: ["title"], Author: ["author"], Sentence: sent, Mask: masked_sentence, Word: w, Score: a_score.item(), Verb: token.pos_, Frequency: count})+"n")
-					#omit sent to only include masked sent?
+		for line in in_embed:
+			jline = json.loads(line)
+			verbs = defaultdict(int)
+			doc = nlp(jline["sentence"])
+			for token in doc:
+				if token.pos_ == {"VERB"}:
+					verbs = token.text[] +=1
+							v_out.write(json.dumps(line | verbs)
