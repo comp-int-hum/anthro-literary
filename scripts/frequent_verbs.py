@@ -1,3 +1,4 @@
+import argparse
 import gzip
 import json
 import spacy
@@ -13,9 +14,11 @@ if __name__ == "__main__":
 	with gzip.open(args.embeddings_in, "rt") as in_embed, gzip.open(args.verbs_out, "wt") as v_out:
 		for line in in_embed:
 			jline = json.loads(line)
+			print(jline)
 			verbs = defaultdict(int)
 			doc = nlp(jline["sentence"])
 			for token in doc:
 				if token.pos_ == {"VERB"}:
-					verbs = token.text[] +=1
-							v_out.write(json.dumps(line | verbs)
+					print(token.pos_)
+					verbs[token.text]+=1
+					v_out.write(json.dumps(line | verbs))
