@@ -25,15 +25,15 @@ if __name__ == "__main__":
 	else:
 		exit
 
-#	print(args.target_words)
+	print(args.target_words)
 	search_pattern = re.compile(r"\b(?:%s)\b" % "|".join(args.target_words), re.IGNORECASE)
 	inputs_animate = a_t(" ".join(args.animate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
 	inputs_inanimate = a_t(" ".join(args.inanimate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
 
 	with gzip.open(args.samples_in, "rt") as in_s, gzip.open(args.embeddings_out, "wt") as e_out:
 		n=0
-		for line in in_s:
-			if n<1000000000:
+		for line in (in_s):
+			if n<10000000000:
 				sent_embeds = []
 				j_line = json.loads(line)
 				for sent in j_line["full_text"]:
@@ -41,7 +41,7 @@ if __name__ == "__main__":
 						for w in args.target_words:
 							masked_sentence = re.subn(r"\b(?:%s)\b" % w, a_t.mask_token, sent, re.IGNORECASE)
 							if masked_sentence[1] > 0:
-#								print(masked_sentence[0])
+								print(masked_sentence[0])
 								try:
 									tokenized_sent = a_t(masked_sentence[0], return_tensors="pt")
 									with torch.no_grad():
@@ -52,7 +52,7 @@ if __name__ == "__main__":
 									pdf = softmax(masked_token_logits, dim=-1)
 									a_score = torch.log(torch.sum(pdf[0, inputs_animate]))-torch.log(torch.sum(pdf[0, inputs_inanimate])).item()
 									print(a_score)
-									e_out.write(json.dumps(j_line | {"masked": masked_sentence, "word": w, "score": a_score.values()}))
+									e_out.write(json.dumps(j_line | {"sentence": sent, "masked": masked_sentence[0], "word": w, "score": a_score.values()}) + "\n")
 								except RuntimeError:
-									e_out.write(json.dumps(j_line | {"masked": masked_sentence, "word": w, "score": "error"}))
+									e_out.write(json.dumps(j_line | {"sentence": sent, "masked": masked_sentence[0], "word": w, "score": "error"}) +"\n")
 			n=n+1
