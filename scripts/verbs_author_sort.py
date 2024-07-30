@@ -15,7 +15,7 @@ if __name__ == "__main__":
 	args = parser.parse_args()
 
 	with codecs.open(args.verbs_in, "r", encoding="ISO-8859-1") as out_sorted:
-		df = pd.read_json(out_sorted, lines=True)
+		df = pd.read_json(out_sorted, lines=True, orient="split")
 
 		count = doc["verbs"].count_by()
 		if df["score"] >=1:
