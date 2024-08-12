@@ -17,11 +17,16 @@ if __name__ == "__main__":
 	with gzip.open(args.embeddings_in, "rt") as in_embed, gzip.open(args.verbs_out, "wt") as v_out:
 		for line in in_embed:
 			jline = json.loads(line)
-			print(jline)
-			verbs = defaultdict(int)
+#			print(jline)
+			print([key for key in jline.keys()])
+			input()
 			doc = nlp(jline["masked"])
+#			print(doc)
 			for token in doc:
-				if token.pos_ == {"VERB"}:
-					print(token.pos_)
-					verbs[token.text]
-					v_out.write(json.dumps(jline | {"verbs": verbs}) + "\n")
+				print(token.pos_)
+				if token.pos_ == "VERB":
+#					print(token.text)
+#					input()
+					token.text
+					print(token.text)
+					v_out.write(json.dumps({"title": jline["title"], "author": jline["author"], "id": jline["id"], "sentence": jline["sentence"], "masked": jline["masked"], "word": jline["word"], "score": jline["score"], "verbs": token.text}) + "\n")
