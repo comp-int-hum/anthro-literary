@@ -2,7 +2,6 @@ import argparse
 import gzip
 import json
 import spacy
-from collections import defaultdict
 
 nlp = spacy.load("en_core_web_sm")
 
@@ -17,14 +16,15 @@ if __name__ == "__main__":
 	with gzip.open(args.embeddings_in, "rt") as in_embed, gzip.open(args.verbs_out, "wt") as v_out:
 		for line in in_embed:
 			jline = json.loads(line)
-#			print(jline)
-			print([key for key in jline.keys()])
-			input()
-			doc = nlp(jline["masked"])
+#			print(jline["score"])
+#			print([key for key in jline.keys()])
+#			input()
+			doc = nlp(jline["masked"][0])
 #			print(doc)
 			for token in doc:
 				print(token.pos_)
 				if token.pos_ == "VERB":
+#					print(token.pos_)
 #					print(token.text)
 #					input()
 					token.text
