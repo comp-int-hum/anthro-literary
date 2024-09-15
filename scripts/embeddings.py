@@ -33,7 +33,7 @@ if __name__ == "__main__":
 	with gzip.open(args.samples_in, "rt") as in_s, gzip.open(args.embeddings_out, "wt") as e_out:
 		n=0
 		for line in (in_s):
-			if n<10000000000:
+			if n<1000000000:
 				sent_embeds = []
 				j_line = json.loads(line)
 				for sent in j_line["full_text"]:
@@ -52,7 +52,8 @@ if __name__ == "__main__":
 									pdf = softmax(masked_token_logits, dim=-1)
 									a_score = torch.log(torch.sum(pdf[0, inputs_animate]))-torch.log(torch.sum(pdf[0, inputs_inanimate])).item()
 									print(a_score)
-									e_out.write(json.dumps(j_line | {"sentence": sent, "masked": masked_sentence[0], "word": w, "score": a_score.values()}) + "\n")
+									print(a_score.item())
+									e_out.write(json.dumps(j_line | {"sentence": sent, "masked": masked_sentence, "word": w, "score": a_score.item()}) + "\n")
 								except RuntimeError:
-									e_out.write(json.dumps(j_line | {"sentence": sent, "masked": masked_sentence[0], "word": w, "score": "error"}) +"\n")
+									e_out.write(json.dumps(j_line | {"sentence": sent, "masked": masked_sentence, "word": w, "score": "error"}) +"\n")
 			n=n+1
