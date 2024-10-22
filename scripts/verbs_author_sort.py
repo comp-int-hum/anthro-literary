@@ -25,11 +25,13 @@ if __name__ == "__main__":
 	if df["score"].isna().all():
 		print("is na")
 
-	if (df["score"] >=1).any():
+#	if (df["score"] >=1).any():
 #		if df["verbs"] >=1:
 #		df.groupby("verbs")
-		df.sort_values("verbs", ascending=False)
-		df.groupby("author")["verbs"]
-		df.to_csv(args.sorted_out)
-	elif df["score"].isna().any():
-		print("none")
+	df = df[df["score"] >=1]
+	df.groupby("verbs")
+	df.sort_values("verbs", ascending=False)
+	df.groupby("author")["verbs"]
+	df.to_csv(args.sorted_out)
+#	elif df["score"].isna().any():
+#		print("none")

@@ -17,12 +17,20 @@ if __name__ == "__main__":
 	print(df["verbs"].head())
 #	df.groupby("verbs")
 	df.sort_values(by=["author", "verbs"], ascending=[False, True], inplace=True)
-	print(df["verbs"].head(25))
+#	print(df["verbs"].head(25))
 
 	df["score"] = pd.to_numeric(df["score"], errors="coerce")
+#	print(df["verbs"].head())
 
-	if (df["score"] >=1).any():
-		df.groupby("author")["verbs"].mean().sort_values()
-		df.to_csv(args.sorted_out)
-	elif df["score"].isna().any():
-		df.to_csv(args.sorted_out)
+	df = df[df["score"] >=1]
+#	print(df["verbs"].value_counts().head())
+	df = df.groupby("verbs")["score"].mean()
+#	df["mean score"] = mean_score
+	df.reset_index().sort_values("score")
+	df.to_csv(args.sorted_out)
+
+#	if (df["score"] >=1).any():
+#		df.groupby("author")["verbs"].mean().sort_values()
+#		df.to_csv(args.sorted_out)
+#	elif df["score"].isna().any():
+#		df.to_csv(args.sorted_out)
