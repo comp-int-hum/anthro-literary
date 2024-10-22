@@ -28,7 +28,8 @@ if __name__ == "__main__":
 	df = pd.DataFrame(data=scores)
 	df["BERT"] = pd.to_numeric(df["BERT"], errors="coerce")
 	df["RoBERTa"] = pd.to_numeric(df["RoBERTa"], errors="coerce")
-	df["difference"] = df["BERT"].abs() - df["RoBERTa"].abs()
+	df["difference"] = df["BERT"] - df["RoBERTa"]
+	df["difference"] = df["difference"].abs()
 
 #	print(bdf.abs().max())
 #	print(rdf.abs().max())
