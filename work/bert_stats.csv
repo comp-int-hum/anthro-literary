@@ -1,0 +1,18 @@
+,positives percent,negatives percent
+0,"title       0.607573
+author      0.607573
+id          0.607573
+sentence    0.607573
+masked      0.607573
+word        0.607573
+score       0.607573
+verbs       0.607573
+dtype: float64","title       0.391644
+author      0.391644
+id          0.391644
+sentence    0.391644
+masked      0.391644
+word        0.391644
+score       0.391644
+verbs       0.391644
+dtype: float64"
