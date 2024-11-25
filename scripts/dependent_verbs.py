@@ -4,7 +4,7 @@ import json
 import csv
 import spacy
 
-#this script is for supervised not self-supervised embeddings
+nlp = spacy.load("en_core_web_sm")
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
@@ -12,22 +12,24 @@ if __name__ == "__main__":
 	parser.add_argument("dependencies_out", help="csv with nouns and matching dependent verbs")
 
 	args = parser.parse_args()
-	nlp = spacy.load("en_core_web_sm")
 
 	with gzip.open(args.verbs_in, "rt") as v_in, open(args.dependencies_out, "wt", newline="") as d_out:
 		out_writer = csv.writer(d_out)
-		out_writer.writerow(["title", "author", "id", "sentence", "masked", "word", "score", "verbs"])
+		out_writer.writerow(["title", "author", "id", "sentence", "masked", "word", "score", "verbs", "dependents"])
 		for line in v_in:
 			jline = json.loads(line)
-			doc1 = nlp(jline["sentence"])
-			doc2 = nlp(jline["word"])
-#			for token in doc["sentence"]:
-#				if token == token in doc["word"]:
-			for token in doc1:
-				if token == token in doc2:
-					dependents = token.head.text
-					out_writer.writerow([jline["title"], jline["author"], jline["id"], jline["sentence"], jline["masked"], jline["word"], jline["score"], dependents])
-#			for token in doc["word"]:
-#				if token.head.pos_ in doc["sentence"]:
-					#write token.head.text
-				#if token.head.pos_ == VERB
+#			print("loaded jline")
+			doc = nlp(jline["masked"][0])
+#			print("loaded doc")
+			for token in doc:
+#				print(token)
+				if token.text == "mask":
+#					print("target word found")
+					print(token.text)
+					for child in token.children:
+						print(child)
+						if child.pos_ == "VERB":
+							print(child)
+#							input()
+							dependents = child.text
+							out_writer.writerow([jline["title"], jline["author"], jline["id"], jline["sentence"], jline["masked"], jline["word"], jline["score"], jline["verbs"], dependents])
