@@ -12,7 +12,7 @@ if __name__ == "__main__":
 	parser.add_argument("samples_in", help="tokenized gz.jsonl file containing fulltext and metadata")
 	parser.add_argument("embeddings_out", help="gz.jsonl file with embeddings and texts")
 	parser.add_argument("--model", help="bert or roberta model name")
-	parser.add_argument("--target_words", nargs="+", help="Embed all sents containing these words. Case insensitive")
+	parser.add_argument("target_words", help="Embed all sents containing these words. Case insensitive")
 	parser.add_argument("--animate_pronouns", nargs="+", help="list of animate pronouns")
 	parser.add_argument("--inanimate_pronouns", nargs="+", help="list of inanimate pronouns")
 
@@ -20,17 +20,18 @@ if __name__ == "__main__":
 	a_t = AutoTokenizer.from_pretrained(args.model)
 	if args.model == "bert-base-uncased":
 		model = BertForMaskedLM.from_pretrained(args.model)
+	elif args.model == "bert-base-cased":
+		model = BertForMaskedLM.from_pretrained(args.model)
 	elif args.model == "FacebookAI/roberta-base":
 		model = RobertaForMaskedLM.from_pretrained(args.model)
 	else:
 		exit
 
-	print(args.target_words)
 	search_pattern = re.compile(r"\b(?:%s)\b" % "|".join(args.target_words), re.IGNORECASE)
 	inputs_animate = a_t(" ".join(args.animate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
 	inputs_inanimate = a_t(" ".join(args.inanimate_pronouns), return_tensors = "pt", add_special_tokens=False).input_ids
 
-	with gzip.open(args.samples_in, "rt") as in_s, gzip.open(args.embeddings_out, "wt") as e_out:
+	with gzip.open(args.samples_in, "rt") as in_s, open(args.target_words, "r") as t_w, gzip.open(args.embeddings_out, "wt") as e_out:
 		n=0
 		for line in (in_s):
 			if n<1000000000:
@@ -38,7 +39,7 @@ if __name__ == "__main__":
 				j_line = json.loads(line)
 				for sent in j_line["full_text"]:
 					if re.search(search_pattern, sent):
-						for w in args.target_words:
+						for w in t_w.readlines():
 							masked_sentence = re.subn(r"\b(?:%s)\b" % w, a_t.mask_token, sent, re.IGNORECASE)
 							if masked_sentence[1] > 0:
 								print(masked_sentence[0])
