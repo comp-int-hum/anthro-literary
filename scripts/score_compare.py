@@ -12,26 +12,21 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 
-	bdf = pd.read_json(args.bert_in, lines=True, compression="gzip")
-	rdf = pd.read_json(args.roberta_in, lines=True, compression="gzip")
 
-	bdf.groupby("score")
-	rdf.groupby("score")
-#	bdf.rename(columns={"score": "BERT"})
-#	rdf.rename(columns={"score": "RoBERTa"})
-#	bdf = bdf[["sentence", "word", "score"]]
-#	rdf = rdf[["sentence", "word", "score"]]
+	with gzip.open(args.bert_in, "rt") as b_in, gzip.open(args.roberta_in, "rt") as r_in:
+		bert_loaded_json = [{"score": json.loads(line)["score"]} for line in b_in]
+		rob_loaded_json = [{"score": json.loads(line)["score"]} for line in r_in]
+		bert_df = pd.DataFrame(bert_loaded_json)
+		rob_df = pd.DataFrame(rob_loaded_json)
 
-#	sdf = bdf.merge(rdf)
-#	sdf["difference"] = sdf["BERT"].abs() - sdf["RoBERTa"].abs()
-	scores = {"BERT": bdf["score"], "RoBERTa": rdf["score"]}
-	df = pd.DataFrame(data=scores)
-	df["BERT"] = pd.to_numeric(df["BERT"], errors="coerce")
-	df["RoBERTa"] = pd.to_numeric(df["RoBERTa"], errors="coerce")
-	df["difference"] = df["BERT"] - df["RoBERTa"]
-	df["difference"] = df["difference"].abs()
+		bdf.groupby("score")
+		rdf.groupby("score")
 
-#	print(bdf.abs().max())
-#	print(rdf.abs().max())
+		scores = {"BERT": bdf["score"], "RoBERTa": rdf["score"]}
+		df = pd.DataFrame(data=scores)
+		df["BERT"] = pd.to_numeric(df["BERT"], errors="coerce")
+		df["RoBERTa"] = pd.to_numeric(df["RoBERTa"], errors="coerce")
+		df["difference"] = df["BERT"] - df["RoBERTa"]
+		df["difference"] = df["difference"].abs()
 
-	df.to_csv(args.score_out)
+		df.to_csv(args.score_out)

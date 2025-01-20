@@ -12,28 +12,21 @@ if __name__ == "__main__":
 
 	args = parser.parse_args()
 
-	with gzip.open(args.verbs_in, "rt") as v_in:
-		for line in v_in:
-			jline = json.loads(line)
-			print(jline)
-			data = pd.read_json(args.verbs_in)
-			df = pd.DataFrame(data["score"])
-	#load into regular python and then read that into pandas dataframe
-#			df = pd.read_json(jline, lines=True, compression="gzip")
+	with gzip.open(args.embed_in, "rt") as e_in:
+		loaded_json = [{"score": json.loads(line)["score"]} for line in e_in]
+		df = pd.DataFrame(loaded_json)
 
-#			df["score"] = pd.to_numeric(df["score"], errors="coerce")
-			df = pd.to_numeric(df, errors="coerce")
-#			neg = df[df["score"] < 0]
-			neg = df[df < 0]
-			neg_counts = neg.count()
-#			pos = df[df["score"] > 0]
-			pos = df[df > 0]
-			pos_counts = pos.count()
-			count = df[df.columns[0]].count()
-			pos_ratio = pos_counts/count
-			neg_ratio = neg_counts/count
-			stats = [{"positives percent": pos_ratio, "negatives percent": neg_ratio}]
+		df["score"] = pd.to_numeric(df["score"], errors="coerce")
+		neg = df[df["score"] < 0]
+		print(neg)
+		neg_counts = neg.count()
+		pos = df[df["score"] > 0]
+		pos_counts = pos.count()
+		count = df[df.columns[0]].count()
+		pos_ratio = pos_counts/count
+		neg_ratio = neg_counts/count
+		out_df = pd.DataFrame()
+		out_df["positive percent"] = pos_ratio
+		out_df["negative percent"] = neg_ratio
 
-			out_df = pd.DataFrame(stats)
-
-			out_df.to_csv(args.stats_out)
+		out_df.to_csv(args.stats_out)

@@ -7,14 +7,16 @@ import math
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("verbs_in", help = "gz.jsonl with verb frequencies")
+	parser.add_argument("embed_in", help = "gz.jsonl with embeddings")
 	parser.add_argument("averaged", help = "csv with mean score per author")
 
 	args = parser.parse_args()
 
-	df = pd.read_json(args.verbs_in, lines=True, compression="gzip")
+	with gzip.open(args.embed_in, "rt") as e_in:
+		loaded_json = [{"score": json.loads(line)["score"], "word": json.loads(line)["word"]} for line in e_in]
+		loaded_df = pd.DataFrame(loaded_json)
 
-	df["score"] = pd.to_numeric(df["score"], errors="coerce")
-	df = df.groupby("word")["score"].mean()
-	df.reset_index().sort_values("word")
-	df.to_csv(args.averaged)
+		loaded_df["score"] = pd.to_numeric(loaded_df["score"], errors="coerce")
+		loaded_df = loaded_df.groupby("word")["score"].mean()
+		loaded_df.reset_index().sort_values("word")
+		loaded_df.to_csv(args.averaged)
