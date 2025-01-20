@@ -7,7 +7,7 @@ import math
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("verbs_in", help = "gz.jsonl with verb frequencies")
+	parser.add_argument("embed_in", help = "gz.jsonl with verb frequencies")
 	parser.add_argument("stats_out", help = "csv with statistics on frequency")
 
 	args = parser.parse_args()

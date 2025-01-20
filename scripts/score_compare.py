@@ -19,10 +19,10 @@ if __name__ == "__main__":
 		bert_df = pd.DataFrame(bert_loaded_json)
 		rob_df = pd.DataFrame(rob_loaded_json)
 
-		bdf.groupby("score")
-		rdf.groupby("score")
+		bert_df.groupby("score")
+		rob_df.groupby("score")
 
-		scores = {"BERT": bdf["score"], "RoBERTa": rdf["score"]}
+		scores = {"BERT": bert_df["score"], "RoBERTa": rob_df["score"]}
 		df = pd.DataFrame(data=scores)
 		df["BERT"] = pd.to_numeric(df["BERT"], errors="coerce")
 		df["RoBERTa"] = pd.to_numeric(df["RoBERTa"], errors="coerce")
