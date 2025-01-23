@@ -22,8 +22,8 @@ if __name__ == "__main__":
 		for line in e_in:
 			jline = json.loads(line)
 			doc = nlp(jline["sentence"])
-			root = [token for token in doc if token.dep_ == "ROOT"][0]
-			verbs = [child.text for child in root.children if child.pos_ == "VERB"]
+#			root = [token for token in doc if token.dep_ == "ROOT"][0]
+#			verbs = [child.text for child in root.children if child.pos_ == "VERB"]
 			for sent in doc.sents:
 				for w in t_w:
 					for token in sent:
@@ -31,7 +31,7 @@ if __name__ == "__main__":
 							target = token
 							head_one = target.head
 							if head_one.pos_ == "VERB":
-								print("target found first")
+								print("target verb found first")
 #								dependents = head_one.text
 								#write out with "dependents": head_one.text
 							else:
