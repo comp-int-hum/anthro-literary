@@ -11,7 +11,7 @@ import spacy
 def find_objects():
 	for token in doc:
 		if token.pos_ == NOUN:
-			word = token.text
+			target_word = token.text
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
@@ -45,12 +45,9 @@ if __name__ == "__main__":
 				for sent in j_line["full_text"]:
 					if re.search(search_pattern, sent):
 						doc = nlp(jline["full_text")
-#						for word in doc:
-						#would spacy interpret this above line correctly? or:
-#						for token in doc:
-#							if token.text == word:
-
-							masked_sentence = re.subn(r"\b(?:%s)\b" % word, a_t.mask_token, sent, re.IGNORECASE)
+						doc.find_objects()
+						for target_word in doc:
+							masked_sentence = re.subn(r"\b(?:%s)\b" % target_word, a_t.mask_token, sent, re.IGNORECASE)
 							if masked_sentence[1] > 0:
 								print(masked_sentence[0])
 								try:
