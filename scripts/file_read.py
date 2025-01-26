@@ -2,29 +2,32 @@ import argparse
 import json
 import re
 import gzip
+import csv
+
+def tokenize_segment(segment_text):
+        sents = re.split(r" *(?<=[\.\?!]) [\'\"\)\]]* *", segment_text)
+	#sents = re.split(r" *[\.\?!][\'\"\)\]]* *", segment_text)
+        return sents
 
 if __name__== "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("corpus", help = "json containing corpus and metadata")
-	parser.add_argument("sentences", help = "json containing sentences with metadata")
+	parser.add_argument("--input", help = "jsonl or csv containing corpus and metadata")
+	parser.add_argument("--outputs", help = "jsonl containing sentences with metadata")
+	parser.add_argument("--id", help = "field to include as id in output gzjsonl", default="acl_id")
 	args = parser.parse_args()
 
-	with open(args.corpus, "rt") as corpus_in, gzip.open(args.sentences, "wt") as corpus_out:
-
-		for line in corpus_in:
-			try:
+	with open(args.input, "rt") as corpus_in, gzip.open(args.outputs, "wt") as corpus_out:
+		if args.input.endswith(".csv"):
+			cr = csv.DictReader(corpus_in)
+			for line in cr:
+				corpus_out.write(json.dumps({"full_text": tokenize_segment(line["abstract"]), "id": line[args.id]}) + "\n")
+				
+		elif args.input.endswith(".jsonl"):	    
+			for line in corpus_in:
 				jl = json.loads(line)
 				jl["full_text"] = []
-#				print([key for key in jl.keys()])
-#				print(jl["segments"])
-#				print(list(jl.values()))
 				for segment in jl["segments"].values():
-#					print(segment)
 					for segment_text in segment:
-						sents = re.split(r" *[\.\?!][\'\"\)\]]* *", segment_text)
-#						print(sents)
+						sents = tokenize_segment(segment_text)
 						jl["full_text"] += sents
-#						print(jl["full_text"])
 				corpus_out.write(json.dumps(jl)+"\n")
-			except:
-				pass
