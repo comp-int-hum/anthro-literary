@@ -28,7 +28,7 @@ vars.AddVariables(
     ("ANIMATE_PRONOUNS", "", ["he", "she", "her", "him", "He", "She", "Her"]), #List of animate pronouns
     ("INANIMATE_PRONOUNS", "", ["it","its","It","Its"]), #List of inanimate pronouns
     #("UNSUPERVISED", "", [False, True]), #If false, use word list. Otherwise, use all nouns.
-    ("UNSUPERVISED", "", [False]),
+    ("UNSUPERVISED", "", [True]),
     ("DEVICE", "", "cpu")
 )
 
@@ -47,6 +47,9 @@ env = Environment(
     BUILDERS={
         "CreateData" : Builder(
             action="python scripts/file_read.py --input ${SOURCES[0]} --outputs ${TARGETS[0]}"
+        ),
+        "SampleTexts": Builder(
+            action="python scripts/sample_texts.py --input ${SOURCES[0]} --outputs ${TARGETS[0]} --nsamp 250"
         ),
         "GetAS" : Builder(
             action="python scripts/embeddings.py --input ${SOURCES[0]} --outputs ${TARGETS[0]} "
@@ -82,10 +85,6 @@ env = Environment(
         #model_negatives.py pull all negative scores
         "ModelNegatives" : Builder(
             action="python scripts/model_negatives.py ${SOURCES[0]} ${TARGETS[0]} --thresh 0"
-        ),
-
-        "WordVerb" : Builder(
-            action="python scripts/word_verb_score.py --input ${SOURCES[0]} --output_wv ${TARGETS[0]} --output_avw ${TARGETS[1]}"
         ),
 
         #author_verbs complex: All verbs/sentence/author. Gather with Ascore > 1. Are there verbs that are particularly associated with target being high/author?
@@ -127,7 +126,8 @@ for dataset_name, dataset_file in env["DATASETS"].items():
         oname = "all_nouns" if unsup else "wordlist"
         for model_type in env["MODEL_TYPES"]:
             if unsup:
-               a_scores = env.GetASUnsup("work/${DATASET_NAME}/${MODEL}/${ONAME}/as.gz.jsonl", data, DATASET_NAME=dataset_name, MODEL=model_type, ONAME=oname)
+               samp_data = env.SampleTexts("work/${DATASET_NAME}/${MODEL}/${ONAME}/samp_ds.gz.jsonl", data, DATASET_NAME=dataset_name, MODEL=model_type, ONAME=oname)
+               a_scores = env.GetASUnsup("work/${DATASET_NAME}/${MODEL}/${ONAME}/as.gz.jsonl", samp_data, DATASET_NAME=dataset_name, MODEL=model_type, ONAME=oname)
                results_un[model_type] = a_scores
             else:
                a_scores = env.GetAS("work/${DATASET_NAME}/${MODEL}/${ONAME}/as.gz.jsonl", data, DATASET_NAME=dataset_name, MODEL=model_type, ONAME=oname)
@@ -141,13 +141,12 @@ for dataset_name, dataset_file in env["DATASETS"].items():
 
     for model_type, a_s in results_sup.items():
         for col in env["TARGET_WORDS"]:
-            indy_res = env.SplitTargets("work/${DATASET_NAME}/${MODEL}/individual/${COL}.gz.jsonl", a_s, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
-            individual_model[model_type].append(indy_res)           
-            csv_out = env.HumanReadable("work/${DATASET_NAME}/${MODEL}/individual/${COL}_readable.csv", indy_res, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
-            total_mean_a = env.TotalMeanAuthor("work/${DATASET_NAME}/${MODEL}/individual/${COL}_total_mean_author.csv", indy_res, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
-            total_mean_w = env.TotalMeanWord("work/${DATASET_NAME}/${MODEL}/individual/${COL}_total_mean_word.csv", indy_res, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
-            pos_neg = env.PosNegRatio("work/${DATASET_NAME}/${MODEL}/individual/${COL}_pos_neg.csv", indy_res, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
-            score_buckets = env.BucketScores("work/${DATASET_NAME}/${MODEL}/individual/${COL}_score_buckets.csv", indy_res, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
-            negatives = env.ModelNegatives("work/${DATASET_NAME}/${MODEL}/individual/${COL}_negatives.csv", indy_res, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
-            word_verb = env.WordVerb(["work/${DATASET_NAME}/${MODEL}/individual/${COL}_verb_score.csv","work/${DATASET_NAME}/${MODEL}/individual/${COL}_author_verb_score.csv"], indy_res, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
+            indv_res = env.SplitTargets("work/${DATASET_NAME}/${MODEL}/individual/${COL}.gz.jsonl", a_s, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
+            individual_model[model_type].append(indv_res)           
+            csv_out = env.HumanReadable("work/${DATASET_NAME}/${MODEL}/individual/${COL}_readable.csv", a_scores, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
+            total_mean_a = env.TotalMeanAuthor("work/${DATASET_NAME}/${MODEL}/individual/${COL}_total_mean_author.csv", a_scores, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
+            total_mean_w = env.TotalMeanWord("work/${DATASET_NAME}/${MODEL}/individual/${COL}_total_mean_word.csv", a_scores, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
+            pos_neg = env.PosNegRatio("work/${DATASET_NAME}/${MODEL}/individual/${COL}_pos_neg.csv", a_scores, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
+            score_buckets = env.BucketScores("work/${DATASET_NAME}/${MODEL}/individual/${COL}_score_buckets.csv", a_scores, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
+            negatives = env.ModelNegatives("work/${DATASET_NAME}/${MODEL}/individual/${COL}_negatives.csv", a_scores, DATASET_NAME=dataset_name, MODEL=model_type, COL=col)
 

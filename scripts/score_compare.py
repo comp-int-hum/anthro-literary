@@ -6,9 +6,9 @@ import pandas as pd
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("bert_in", help = "gz.jsonl with bert embeddings")
-	parser.add_argument("roberta_in", help = "gz.jsonl with roberta embeddings")
-	parser.add_argument("score_out", help = "csv with score difference")
+	parser.add_argument("--bert_in", help = "gz.jsonl with bert embeddings")
+	parser.add_argument("--roberta_in", help = "gz.jsonl with roberta embeddings")
+	parser.add_argument("--score_out", help = "csv with score difference")
 
 	args = parser.parse_args()
 

@@ -7,12 +7,12 @@ import math
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("verbs_in", help = "csv with bert and roberta score differences")
-	parser.add_argument("averaged", help = "csv with mean difference between bert and roberta scores")
+	parser.add_argument("--diff_in", help = "csv with bert and roberta score differences")
+	parser.add_argument("--averaged", help = "csv with mean difference between bert and roberta scores")
 
 	args = parser.parse_args()
 
-	df = pd.read_csv(args.verbs_in)
+	df = pd.read_csv(args.diff_in)
 
 	df["difference"] = pd.to_numeric(df["difference"], errors="coerce")
 	mean_diff = df["difference"].mean()

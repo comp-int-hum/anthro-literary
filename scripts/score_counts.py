@@ -47,8 +47,12 @@ if __name__ == "__main__":
 		under_neg_five = df["score"] [df["score"] <= -6]
 		neg_higher = under_neg_five.count()
 		count = df[df.columns[0]].count()
-		counts = [{"6 or higher counts": higher, "5 : 6 counts": five, "4 : 5 counts": four, "3 : 4 counts": three, "2 : 3 counts": two, "1 : 2 counts": one, "0 : 1 counts": decimals, "0 : -1 counts": neg_dec, "-1 : -2 counts": neg_one, "-2 : -3 counts": neg_two, "-3 : -4 counts": neg_three, "-4 : -5 counts": neg_four, "-5 : -6 counts": neg_five, "-6 or lower counts": neg_higher}]
+		counts = [{"6 or higher": higher, "5 : 6": five, "4 : 5": four, "3 : 4": three, "2 : 3": two, "1 : 2": one, "0 : 1": decimals, "0 : -1": neg_dec, "-1 : -2": neg_one, "-2 : -3": neg_two, "-3 : -4": neg_three, "-4 : -5": neg_four, "-5 : -6": neg_five, "-6 or lower": neg_higher}]
 
-		out_df = pd.DataFrame(counts)
+		out_df = pd.DataFrame(counts, index=["counts"])
+		out_df_2 = out_df.apply(lambda row: row/count * 100, axis=1, result_type="expand")
+		out_df_2.index = ["percent"]
+		print(out_df_2)
+		print(pd.concat([out_df, out_df_2]))
 
-		out_df.to_csv(args.stats_out)
+		pd.concat([out_df,out_df_2]).to_csv(args.stats_out)

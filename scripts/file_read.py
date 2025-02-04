@@ -5,9 +5,9 @@ import gzip
 import csv
 
 def tokenize_segment(segment_text):
-        sents = re.split(r" *(?<=[\.\?!]) [\'\"\)\]]* *", segment_text)
+	sents = re.split(r" *(?<=[\.\?!]) [\'\"\)\]]* *", segment_text)
 	#sents = re.split(r" *[\.\?!][\'\"\)\]]* *", segment_text)
-        return sents
+	return sents
 
 if __name__== "__main__":
 	parser = argparse.ArgumentParser()
@@ -22,12 +22,18 @@ if __name__== "__main__":
 			for line in cr:
 				corpus_out.write(json.dumps({"full_text": tokenize_segment(line["abstract"]), "id": line[args.id]}) + "\n")
 				
-		elif args.input.endswith(".jsonl"):	    
+		elif args.input.endswith(".jsonl"):
+			n_e = 0
 			for line in corpus_in:
-				jl = json.loads(line)
-				jl["full_text"] = []
-				for segment in jl["segments"].values():
-					for segment_text in segment:
-						sents = tokenize_segment(segment_text)
-						jl["full_text"] += sents
-				corpus_out.write(json.dumps(jl)+"\n")
+				try:
+					jl = json.loads(line)
+					jl["full_text"] = []
+					for segment in jl["segments"].values():
+						for segment_text in segment:
+							sents = tokenize_segment(segment_text)
+							jl["full_text"] += sents
+					corpus_out.write(json.dumps(jl)+"\n")
+				except json.decoder.JSONDecodeError:
+					n_e += 1
+					continue
+			print(n_e)

@@ -16,7 +16,7 @@ if __name__ == "__main__":
         parser.add_argument("--outputs", help="gz.jsonl file with embeddings and texts")
         parser.add_argument("--model", help="bert or roberta model name")
         parser.add_argument("--dep_include", nargs="+", default=["nsubj", "dobj"], help="use only these noun dependency relations")
-        parser.add_argument("--target_words", help="Embed all sents containing these words. Case insensitive")
+        parser.add_argument("--target_words", nargs="+", help="Embed all sents containing these words. Case insensitive")
         parser.add_argument("--animate_pronouns", nargs="+", help="list of animate pronouns")
         parser.add_argument("--inanimate_pronouns", nargs="+", help="list of inanimate pronouns")
         parser.add_argument("--all_nouns", action="store_true", default=False, help="if true, forget --target_words and evaluate all nouns in the parse")
@@ -33,8 +33,7 @@ if __name__ == "__main__":
                 model = RobertaForMaskedLM.from_pretrained(args.model).to(args.device)
 
         if not args.all_nouns:
-                with open(args.target_words) as tw:
-                        t_w = [t.strip() for t in tw.readlines()]
+                t_w = [t.strip() for t in args.target_words]
                 print(f"Target words: {t_w}")
                 search_pattern = re.compile(r"\b(?:%s)\b" % "|".join(t_w), re.IGNORECASE)
                 
@@ -72,7 +71,16 @@ if __name__ == "__main__":
                 pdf = scipy.special.softmax(masked_token_logits)
                 a_score = np.log(np.sum([pdf[i] for i in inputs_animate])) - np.log(np.sum([pdf[i] for i in inputs_inanimate])) 
                 return a_score
-                
+
+
+        def get_all_pos(parsed_sent, pos):
+                toks = []
+                for token in parsed_sent:
+                        if token.pos_ == pos:
+                                toks.append(token.text)
+                return toks
+                                
+        
         n_sent = 0
         with gzip.open(args.input, "rt") as in_s, gzip.open(args.outputs, "wt") as e_out:
                 for line in (in_s):
@@ -90,16 +98,25 @@ if __name__ == "__main__":
                                                                                 n_sent +=1
                                                                                 masked_sentence = re.subn(r"\b(?:%s)\b" % re.escape(noun_chunk.text), a_t.mask_token, parsed_sent.text, re.IGNORECASE)
                                                                                 a_score = get_as(masked_sentence[0].strip())
-                                                                                e_out.write(json.dumps(j_line | {"sentence": parsed_sent.text, "masked": masked_sentence, "word": w,
-                                                                                                                 "score": a_score.item(), "verb": verb, "np": noun_chunk.text}) + "\n")
+                                                                                e_out.write(json.dumps({key:item for key,item in j_line.items() if key not in  ["full_text", "segments"]}|
+                                                                                                       {"sentence": parsed_sent.text, "masked": masked_sentence[0], "word": w,
+                                                                                                        "role": noun_chunk.root.dep_,
+                                                                                                        "pos": noun_chunk.root.pos_,
+                                                                                                        "score": a_score.item(), "verb": verb, "np": noun_chunk.text,
+                                                                                                        "verbs": get_all_pos(parsed_sent, "VERB")}) + "\n")
                                                 else:
                                                         if noun_chunk.root.dep_ in args.dep_include:
                                                                 n_sent += 1
                                                                 verb = noun_chunk.root.head.lemma_.lower()
                                                                 masked_sentence = re.subn(r"\b(?:%s)\b" % re.escape(noun_chunk.text), a_t.mask_token, parsed_sent.text, re.IGNORECASE)
                                                                 a_score = get_as(masked_sentence[0])
-                                                                e_out.write(json.dumps(j_line | {"sentence": parsed_sent.text, "masked": masked_sentence, "word": noun_chunk.root.text.lower(),
-                                                                                         "score": a_score.item(), "verb": verb, "np": noun_chunk.text}) + "\n")
+                                                                e_out.write(json.dumps({key:item for key,item in j_line.items() if key not in ["full_text","segments"]} |
+                                                                                       {"sentence": parsed_sent.text, "masked": masked_sentence[0],
+                                                                                        "word": noun_chunk.root.text.lower(),
+                                                                                        "role": noun_chunk.root.dep_,
+                                                                                        "pos": noun_chunk.root.pos_,
+                                                                                        "score": a_score.item(), "verb": verb, "np": noun_chunk.text,
+                                                                                        "verbs": get_all_pos(parsed_sent, "VERB")}) + "\n")
                                                         
         print(f"Found {n_sent} sents")                                                                         
                                                 

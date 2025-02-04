@@ -7,9 +7,9 @@ from scipy import stats
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser()
-	parser.add_argument("bert_in", help = "gz.jsonl with bert embeddings")
-	parser.add_argument("roberta_in", help = "gz.jsonl with roberta embeddings")
-	parser.add_argument("stats_out", help = "csv with statistics")
+	parser.add_argument("--bert_in", help = "gz.jsonl with bert embeddings")
+	parser.add_argument("--roberta_in", help = "gz.jsonl with roberta embeddings")
+	parser.add_argument("--stats_out", help = "csv with statistics")
 
 	args = parser.parse_args()
 

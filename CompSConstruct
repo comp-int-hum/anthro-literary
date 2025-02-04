@@ -1,0 +1,76 @@
+import os
+import os.path
+import logging
+import random
+import subprocess
+import shlex
+import gzip
+import re
+import functools
+import time
+import imp
+import sys
+
+#"acl_50" : "replication/acl_50.csv",
+#replication/entities.txt"
+
+
+# Variables control various aspects of the experiment.  Note that you have to declare
+# any variables you want to use here, with reasonable default values, but when you want
+# to change/override the default values, do so in the "custom.py" file (see it for an
+# example, changing the number of folds).
+vars = Variables("custom.py")
+vars.AddVariables(
+        ("DATASET_STEM","", "work/gutenberg/"),
+        ("BERT_DATASETS", "", ["bert-base-cased/wordlist/as.gz.jsonl","bert-base-cased/individual/pen.gz.jsonl","bert-base-cased/individual/rock.gz.jsonl","bert-base-cased/individual/tree.gz.jsonl"]),
+        ("ROBERTA_DATASETS", "", ["roberta-base/wordlist/as.gz.jsonl", "roberta-base/individual/pen.gz.jsonl","roberta-base/individual/rock.gz.jsonl","roberta-base/individual/tree.gz.jsonl"]),
+        ("DATASET_NAMES", "", ["full_wordlist","pen","rock","tree"])
+)
+
+# Methods on the environment object are used all over the place, but it mostly serves to
+# manage the variables (see above) and builders (see below).
+env = Environment(
+    variables=vars,
+    ENV=os.environ,
+    
+    # Defining a bunch of builders (none of these do anything except "touch" their targets,
+    # as you can see in the dummy.py script).  Consider in particular the "TrainModel" builder,
+    # which interpolates two variables beyond the standard SOURCES/TARGETS: PARAMETER_VALUE
+    # and MODEL_TYPE.  When we invoke the TrainModel builder (see below), we'll need to pass
+    # in values for these (note that e.g. the existence of a MODEL_TYPES variable above doesn't
+    # automatically populate MODEL_TYPE, we'll do this with for-loops).
+    BUILDERS={
+        "MeanDiff" : Builder(action="python scripts/mean_diff.py --diff_in ${SOURCES[0]} --averaged ${TARGETS[0]}"),
+        "ScoreCompare" : Builder(action="python scripts/score_compare.py --bert_in ${SOURCES[0]} --roberta_in ${SOURCES[1]} --score_out ${TARGETS[0]}"),
+        "CompareStats" : Builder(action="python scripts/compare_stat.py --bert_in ${SOURCES[0]} --roberta_in ${SOURCES[1]} --stats_out ${TARGETS[0]}")
+        #score_compare.py absolute difference of anthroscores across models, pointwise (delta of individual scores)
+        #mean_diff.py takes mean of column for score_compare
+        #compare_stats.py distribution measures etc, pointwise
+        
+    }
+)
+
+# OK, at this point we have defined all the builders and variables, so it's
+# time to specify the actual experimental process, which will involve
+# running all combinations of datasets, folds, model types, and parameter values,
+# collecting the build artifacts from applying the models to test data in a list.
+#
+# The basic pattern for invoking a build rule is:
+#
+#   "Rule(list_of_targets, list_of_sources, VARIABLE1=value, VARIABLE2=value...)"
+#
+# Note how variables are specified in each invocation, and their values used to fill
+# in the build commands *and* determine output filenames.  It's a very flexible system,
+# and there are ways to make it less verbose, but in this case explicit is better than
+# implicit.
+#
+# Note also how the outputs ("targets") from earlier invocation are used as the inputs
+# ("sources") to later ones, and how some outputs are also gathered into the "results"
+# variable, so they can be summarized together after each experiment runs.
+
+for name, bert, roberta in zip(env["DATASET_NAMES"], env["BERT_DATASETS"], env["ROBERTA_DATASETS"]):
+    comp = env.ScoreCompare("${DS}/comparisons/${NAME}/comps.csv", [env["DATASET_STEM"]+bert, env["DATASET_STEM"]+roberta], DS=env["DATASET_STEM"], NAME=name)
+    mean = env.MeanDiff("${DS}/comparisons/${NAME}/mean_diff.csv", comp, DS=env["DATASET_STEM"], NAME=name)
+    
+
+
